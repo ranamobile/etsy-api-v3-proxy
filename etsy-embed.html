@@ -1,0 +1,124 @@
+<html>
+  <head>
+    <style>
+      body {
+        font-family: Montserrat;
+        font-size: 11px;
+      }
+      img {
+        width: 100%;
+        height: auto;
+      }
+    </style>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
+
+    <script
+      src="https://code.jquery.com/jquery-3.1.1.min.js"
+      integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+      crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+    <script>
+      const etsyShopName = "CHANGEME";
+      const limit = 100;
+      const proxyUrl = "CHANGEME";
+
+      const loadListings = (listings) => {
+        $.each(listings, (i, result) => {
+          var shortTitle = $.trim(result.title).substring(0,60).split(" ").slice(0, -1).join(" ") + "...";
+          var srcImage = result.image.url_fullxfull;
+
+          $("#etsy-listings-carousel")
+            .append($(`
+              <a class=carousel-item href='${result.url}'>
+                <img class=img-responsive src='${srcImage}'>
+                <span class="title hide">${shortTitle}</span>
+                <span class="price hide">${result.price}</span>
+              </a>`));
+
+          $("#etsy-listings-scroll")
+            .append($(`
+              <a class=carousel-item href='${result.url}'>
+                <div class=card>
+                  <div class="card-image waves-effect waves-block waves-light">
+                    <img class=img-responsive src='${srcImage}'>
+                  </div>
+                  <div class="card-content">
+                    <span class="card-title activator grey-text text-darken-4">${result.price}</span>
+                    <p>${shortTitle}</p>
+                  </div>
+                </div>
+              </a>`));
+        });
+        $(".carousel").carousel({
+          onCycleTo: onCycleTo,
+          numVisible: 3,
+        });
+        $(".progress").addClass("hide");
+      }
+
+      const getListings = (etsyShopName, limit, page) => {
+        $(document).ready(() => {
+          $(".progress").removeClass("hide");
+
+          const requestOptions =  {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              shop_name: etsyShopName,
+              limit: limit,
+              page: page,
+            })
+          };
+
+          fetch(proxyUrl, requestOptions)
+            .then(response => response.json())
+            .then(data => {
+              loadListings(data.results);
+            });
+        });
+      }
+
+      const onCycleTo = (element) => {
+        const slideUrl = $(".active").attr("href");
+        const slideTitle = $(".active .title").text();
+        const slidePrice = $(".active .price").text();
+        $("#slide-info")
+          .empty()
+          .append(`
+            <div class=card>
+              <div class=card-content>
+                <h5>${slidePrice}</h5>
+                <a href=${slideUrl}>
+                  <h6>${slideTitle}</h6>
+                </a>
+              </div>
+            </div>`);
+      }
+
+      getListings(etsyShopName, limit, 0);
+    </script>
+  </head>
+
+  <body>
+    <div class="container center-align">
+      <div class="progress">
+        <div class="indeterminate"></div>
+      </div>
+    </div>
+    <div class="container hide-on-small-only show-on-medium-and-up">
+      <div class="carousel" id="etsy-listings-carousel"></div>
+    </div>
+    <div class="container hide-on-med-and-up show-on-small" id="etsy-listings-scroll">
+    </div>
+    <div id="slide-info" class="container center-align">
+    </div>
+  </body>
+</html>
